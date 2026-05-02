@@ -71,7 +71,8 @@ app.post("/register", async (req, res) => {
       ]
     );
 
-    res.json(result.rows[0]);
+    // res.json(result.rows[0]);
+    res.sendStatus(201);
   } catch (err) {
     console.error(err);
     res.status(500).send("Error saving user");
@@ -81,15 +82,20 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const result = await pool.query(
-    "SELECT * FROM users WHERE email=$1 AND password=$2",
-    [email, password]
-  );
+  try{
+      const result = await pool.query(
+        "SELECT * FROM users WHERE email=$1 AND password=$2",
+        [email, password]
+      );
 
-  if (result.rows.length > 0) {
-    res.json({ success: true, user: result.rows[0] });
-  } else {
-    res.json({ success: false });
+      if (result.rows.length > 0) {
+        res.json({ success: true, user: result.rows[0] });
+      } else {
+        res.json({ success: false });
+      }
+  }catch(err){
+    console.log(err);
+    res.status(500).send("Error fetching data");
   }
 });
 

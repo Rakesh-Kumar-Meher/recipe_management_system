@@ -8,14 +8,20 @@ export default function Dashboard() {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(null);
-  const [cuisine, setCuisine] = useState("");
-  const [diet, setDiet] = useState("");
-  const [type, setType] = useState("");
-  const [time, setTime] = useState("");
-  const [include, setInclude] = useState("");
-  const [exclude, setExclude] = useState("");
-  const [rating, setRating] = useState(1);
-  const [comment, setComment] = useState("");
+  const [filters, setFilters] = useState({
+    cuisine: "",
+    diet: "",
+    type: "",
+    time: "",
+    include: "",
+    exclude: ""
+  });
+
+
+  const [review, setReview] = useState({
+    rating: 1,
+    comment: ""
+  });
 
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -29,16 +35,24 @@ export default function Dashboard() {
     }
   }, [selectedRecipe]);
 
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleReviewChange = (e) => {
+    setReview({ ...review, [e.target.name]: e.target.value });
+  };
+
   const searchRecipes = async () => {
     try {
       const res = await axios.get("http://localhost:5000/recipes", {
         params: {
-          cuisine,
-          diet,
-          type,
-          maxReadyTime: time,
-          includeIngredients: include,
-          excludeIngredients: exclude
+          cuisine: filters.cuisine,
+          diet: filters.diet,
+          type: filters.type,
+          maxReadyTime: filters.time,
+          includeIngredients: filters.include,
+          excludeIngredients: filters.exclude
         }
       });
 
@@ -62,7 +76,7 @@ export default function Dashboard() {
   };
 
   const submitReview = async () => {
-    if (!comment.trim()) {
+    if (!review.comment.trim()) {
       alert("Enter comment");
       return;
     }
@@ -70,11 +84,11 @@ export default function Dashboard() {
     await axios.post("http://localhost:5000/review", {
       user_id: user.id,
       recipe_id: selectedRecipe.id,
-      rating: Number(rating),
-      comment
+      rating: Number(review.rating),
+      comment: review.comment
     });
 
-    setComment("");
+    setReview({rating: 1, comment:""});
     loadReviews(selectedRecipe.id);
   };
 
@@ -153,19 +167,19 @@ export default function Dashboard() {
               </div>
 
               <div className="filter-grid">
-                <input placeholder="Cuisine" onChange={(e) => setCuisine(e.target.value)} />
-                <input placeholder="Diet" onChange={(e) => setDiet(e.target.value)} />
+                <input name="cuisine" placeholder="Cuisine" onChange={handleFilterChange} />
+                <input name="diet" placeholder="Diet" onChange={handleFilterChange} />
 
-                <select onChange={(e) => setType(e.target.value)}>
+                <select name="type" onChange={handleFilterChange}>
                   <option value="">Meal Type</option>
                   <option value="breakfast">Breakfast</option>
                   <option value="lunch">Lunch</option>
                   <option value="dinner">Dinner</option>
                 </select>
 
-                <input placeholder="Max Time in Minutes" onChange={(e) => setTime(e.target.value)} />
-                <input placeholder="Include Ingredients" onChange={(e) => setInclude(e.target.value)} />
-                <input placeholder="Exclude Ingredients" onChange={(e) => setExclude(e.target.value)} />
+                <input name="time" placeholder="Max Time in Minutes" onChange={handleFilterChange} />
+                <input name="include" placeholder="Include Ingredients" onChange={handleFilterChange} />
+                <input name="exclude" placeholder="Exclude Ingredients" onChange={handleFilterChange} />
 
                 <button onClick={searchRecipes}>Search Recipes</button>
               </div>
@@ -256,7 +270,7 @@ export default function Dashboard() {
                   </div>
 
                   <div className="review-form">
-                    <select value={rating} onChange={(e) => setRating(e.target.value)}>
+                    <select name="rating" value={review.rating} onChange={handleReviewChange}>
                       <option value="1">1 Star</option>
                       <option value="2">2 Stars</option>
                       <option value="3">3 Stars</option>
@@ -265,9 +279,10 @@ export default function Dashboard() {
                     </select>
 
                     <input
+                      name="comment"
                       placeholder="Write a short comment"
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
+                      value={review.comment}
+                      onChange={handleReviewChange}
                     />
 
                     <button onClick={submitReview}>Submit Review</button>
